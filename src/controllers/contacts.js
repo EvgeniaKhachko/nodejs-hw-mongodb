@@ -1,21 +1,66 @@
 
-
 import { getContacts, getContactById , createContact, updateContact, deleteContact } from '../services/contacts.js';
 import createError from 'http-errors';
 
-// Контролер для отримання всіх контактів
+import { parsePaginationParams } from '../utils/parsePaginationParams.js';
+import { parseSortParams } from '../utils/parseSortParams.js';
+import { parseFilterParams } from '../utils/parseFilterParams.js';
+
+
 export const getContactsController = async (req, res, next) => {
   try {
-    const contacts = await getContacts(); // Отримуємо контакти
+    // Обробляємо параметри пагінації
+    const { page, perPage } = parsePaginationParams(req.query);
+    
+    // Обробляємо параметри сортування
+    const { sortBy, sortOrder } = parseSortParams(req.query);
+
+    // Перевірка на коректність значень sortBy та sortOrder
+    const allowedSortFields = ['name', 'phoneNumber', 'email', 'contactType']; 
+    const allowedSortOrders = ['asc', 'desc'];  
+   
+    if (!allowedSortFields.includes(sortBy)) {
+      sortBy = 'name';
+    }
+    if (!allowedSortOrders.includes(sortOrder)) {
+      sortOrder = 'asc';
+    }
+
+    const order = sortOrder === 'desc' ? -1 : 1;
+
+    const filter = parseFilterParams(req.query);
+
+    // Викликаємо функцію для отримання контактів
+    const { contacts, totalItems, totalPages } = await getContacts({
+      page,
+      perPage,
+      sortBy,
+      sortOrder: order,
+      filter,
+    });
+
+    // Перевірка на попередню та наступну сторінку
+    const hasPreviousPage = page > 1;
+    const hasNextPage = page < totalPages;
+
     res.json({
       status: 200,
       message: 'Successfully found contacts!',
-      data: contacts, 
+      data: {
+        data: contacts,
+        page: Number(page),
+        perPage: Number(perPage),
+        totalItems,
+        totalPages,
+        hasPreviousPage,
+        hasNextPage,
+      }
     });
   } catch (err) {
-    next(err); // Передаємо помилку далі в middleware
+    next(err);  // Якщо виникає помилка, передаємо її в middleware
   }
 };
+
 
 // Контролер для отримання контакту за ID
 export const getContactByIdController = async (req, res, next) => {

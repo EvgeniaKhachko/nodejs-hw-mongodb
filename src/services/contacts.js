@@ -1,8 +1,23 @@
     
 import Contact from '../models/contact.js'; 
 
-export const getContacts = async () => {
-  return await Contact.find();
+export const getContacts = async ({ page, perPage, sortBy, sortOrder, filter }) => {
+  try {
+    console.log("Filter:", filter); // Логування фільтру
+
+    const contacts = await Contact.find(filter)  // Запит до бази даних
+      .skip((page - 1) * perPage)  // Пагінація
+      .limit(perPage)  
+      .sort({ [sortBy]: sortOrder });  
+
+    const totalItems = await Contact.countDocuments(filter);  // Підрахунок кількості контактів
+    const totalPages = Math.ceil(totalItems / perPage);  // Обчислення кількості сторінок
+
+    return { contacts, totalItems, totalPages };
+  } catch (err) {
+    console.error("Error in getContacts service:", err);
+    throw err;  // Кидаємо помилку далі
+  }
 };
 
 export const getContactById = async (id) => {
