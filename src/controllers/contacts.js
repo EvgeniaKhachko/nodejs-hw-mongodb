@@ -5,6 +5,42 @@ import createError from 'http-errors';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import Contact from '../models/contact.js';
+
+export const createContactController = async (req, res, next) => {
+  try {
+    const { name, email, phone } = req.body;
+    const userId = req.user._id;
+
+    if (!name || !email || !phone) {
+      throw createError(400, "All fields (name, email, phone) are required");
+    }
+
+    const newContact = await Contact.create({ name, email, phone, userId });
+
+    res.status(201).json({
+      status: 201,
+      message: 'Successfully created a contact!',
+      data: newContact,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+  // export const createContactController = async (req, res, next) => {
+  //   console.log(req.body)
+  // try {
+  //   const newContact = await createContact(req.body);
+  //   res.status(201).json({
+  //     status: 201,
+  //     message: 'Successfully created a contact!',
+  //     data: newContact,
+  //   });
+  // } catch (err) {
+  //   next(err); 
+  // }
+  // };
 
 
 export const getContactsController = async (req, res, next) => {
@@ -58,15 +94,17 @@ export const getContactsController = async (req, res, next) => {
     });
   } catch (err) {
     next(err);  // Якщо виникає помилка, передаємо її в middleware
-  }
+  } 
 };
 
 
 // Контролер для отримання контакту за ID
 export const getContactByIdController = async (req, res, next) => {
   try {
-    const { contactId } = req.params; 
-    const contact = await getContactById(contactId); 
+    const { id } = req.params;
+    const userId = req.user._id;
+    
+    const contact = await Contact.findOne({ _id: id, userId });
     // Якщо контакт не знайдений, створюємо помилку 404
     if (!contact) {
       throw createError(404, 'Contact not found');
@@ -74,37 +112,43 @@ export const getContactByIdController = async (req, res, next) => {
     // Якщо контакт знайдений, відправляємо його
     res.json({
       status: 200,
-      message: `Successfully found contact with id ${contactId}!`,
+      message: `Successfully found contact with id ${id}!`,
       data: contact,
     });
   } catch (error) {
     next(error);
   }
 };
+
+
 // Контролер для створення нового контакту
-export const createContactController = async (req, res, next) => {
-  console.log(req.body)
-try {
-  const newContact = await createContact(req.body);
-  res.status(201).json({
-    status: 201,
-    message: 'Successfully created a contact!',
-    data: newContact,
-  });
-} catch (err) {
-  next(err); 
-}
-};
+// export const createContactController = async (req, res, next) => {
+//   console.log(req.body)
+// try {
+//   const newContact = await createContact(req.body);
+//   res.status(201).json({
+//     status: 201,
+//     message: 'Successfully created a contact!',
+//     data: newContact,
+//   });
+// } catch (err) {
+//   next(err); 
+// }
+// };
 
 export const patchContactController = async (req, res, next) => {
   try {
-    const { contactId } = req.params; // ID контакту з параметрів маршруту
-    const updateData = req.body; // Дані для оновлення  запиту
-
-    const updatedContact = await updateContact(contactId, updateData);
+    const { id } = req.params; // ID контакту з параметрів маршруту
+    const updates = req.body; // Дані для оновлення  запиту
+    const userId = req.user._id;
+    const updatedContact = await Contact.findOneAndUpdate(
+      { _id: id, userId },
+      updates,
+      { new: true }
+  );
 
     if (!updatedContact) {
-      throw createError(404, 'Contact not found');
+      throw createError(404, 'Contact not found or not authorized');
     }
 
     res.json({
@@ -118,8 +162,9 @@ export const patchContactController = async (req, res, next) => {
 };
 export const deleteContactController = async (req, res, next) => {
   try {
-    const { contactId } = req.params;
-    const deletedContact = await deleteContact(contactId);
+    const { id } = req.params;
+    const userId = req.user._id;
+    const deletedContact = await Contact.findOneAndDelete({ _id: id, userId });
 
     // Якщо контакт не знайдено, повертаємо 404
     if (!deletedContact) {
