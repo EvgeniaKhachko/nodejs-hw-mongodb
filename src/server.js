@@ -1,6 +1,8 @@
 import express, { application, json } from 'express';
 import pino from 'pino-http';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import authRouter from './routes/auth.js';
 import contactsRouter from './routes/contacts.js'; // Імпортуємо роутер
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
@@ -15,7 +17,9 @@ export function setupServer() {
     type:['application/json', 'application/vnd.api+json']
   })); 
 
+
   app.use(cors());
+  app.use(cookieParser());
 
   app.use(
     pino({
@@ -35,6 +39,8 @@ app.get('/', (req, res) => {
     message: 'Hello World!',
   });
 });
+
+app.use('/auth', authRouter);
 // Роут для /contacts
   app.use('/contacts', contactsRouter);
 

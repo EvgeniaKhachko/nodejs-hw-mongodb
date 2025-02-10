@@ -41,3 +41,15 @@ export const updateContactSchema = Joi.object({
   contactType: Joi.string().valid("work", "home", "personal").optional(),
 }).or("name", "email", "phoneNumber", "isFavourite", "contactType");
 
+// Схема валідації User
+export const registerUserValidationSchema = Joi.object({
+  name: Joi.string().min(2).max(50).required(),
+  email: Joi.string().required().min(2).max(50).email(),
+  password: Joi.string().min(4).required()
+});
+
+// Схема валідації login
+export const loginUserValidationSchema = Joi.object({
+  email: Joi.string().required().min(2).max(50).email(),
+  password: Joi.string().min(4).required()
+});

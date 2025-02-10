@@ -1,12 +1,12 @@
-import { HttpError } from 'http-errors';
+import createHttpError from "http-errors";
 
 export const errorHandler = (err, req, res, next) => {
     console.error(err);
  // Перевірка, чи отримали ми помилку від HttpError
-  if (err instanceof HttpError) {
+ if (err instanceof createHttpError.HttpError) {
     res.status(err.status).json({
       status: err.status,
-      message: err.name,
+      message: err.message,
       data: err,
     });
     return;
