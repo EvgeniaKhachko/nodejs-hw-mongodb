@@ -10,12 +10,7 @@ try {
         status: 201,
         message: "Successfully registered a user!",
         data: newUser
-        // data: {
-        //     id: newUser._id,
-        //     name: newUser.name,
-        //     email: newUser.email,
-        // },
-});
+    });
 } catch (error) {
     next(error);
   }
@@ -25,11 +20,12 @@ try {
 export const loginUserController = async (req, res, next) => {
   try {
       const session = await loginUser(req.body);
+
       res.cookie ('sessionToken', session.refreshToken,{
         httpOnly: true,
         expires: session.refreshTokenValidUntil,
-      
       });
+        
       res.cookie ('sessionId', session._id,{
         httpOnly: true,
         expires: session.refreshTokenValidUntil,
@@ -56,22 +52,17 @@ export const refreshSessionController = async (req, res) => {
       if (!sessionId || !sessionToken) {
           return res.status(400).json({ message: 'Missing session ID or token in cookies' });
       } 
-      const { accessToken, sessionId: newSessionId } = await refreshSession({ sessionId, sessionToken });
+      const { accessToken } = await refreshSession({ sessionId, sessionToken });
       
       // Відповідь після успішного оновлення сесії
       res.status(200).json({
           status: '200',
           message: 'Successfully refreshed a session!',
-          data: {
-            accessToken,
-            sessionId: newSessionId
-          }
+          data: {accessToken}
       });
   } catch (error) {
-      console.error('Error refreshing session:', error);
-      res.status(500).json({ message: 'Something went wrong', error: error.message });
+    next(error);
   }
-  res.send();
 };
 
 

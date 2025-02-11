@@ -15,12 +15,13 @@ import {authenticate} from '../middlewares/authenticate.js'
 
 const router = Router();
 
-router.use('/', authenticate);
-router.get('/',authenticate, ctrlWrapper(getContactsController));
-router.get('/:contactId', authenticate,isValidId, ctrlWrapper(getContactByIdController));
-router.post('/',authenticate, validateBody(contactSchema), ctrlWrapper(createContactController));
-router.patch('/:contactId',authenticate, isValidId, validateBody(updateContactSchema), ctrlWrapper(patchContactController));
-router.delete('/:contactId',authenticate, isValidId, ctrlWrapper(deleteContactController));
+router.use(authenticate);
+
+router.get('/', ctrlWrapper(getContactsController));
+router.get('/:contactId', isValidId, ctrlWrapper(getContactByIdController));
+router.post('/', validateBody(contactSchema), ctrlWrapper(createContactController));
+router.patch('/:contactId', isValidId, validateBody(updateContactSchema), ctrlWrapper(patchContactController));
+router.delete('/:contactId', isValidId, ctrlWrapper(deleteContactController));
 
 export default router;
 

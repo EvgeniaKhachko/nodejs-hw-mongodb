@@ -41,6 +41,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/auth', authRouter);
+
 // Роут для /contacts
   app.use('/contacts', contactsRouter);
 
