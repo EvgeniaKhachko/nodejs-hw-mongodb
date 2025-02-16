@@ -1,7 +1,7 @@
 
 import { registerUser ,loginUser, logoutUser ,refreshSession } from "../services/auth.js";
 import createHttpError from "http-errors";
-
+import { ONE_DAY } from "../../time.js";
 
 
 export const registerUserController = async (req, res, next) => {
@@ -28,10 +28,9 @@ export const loginUserController = async (req, res, next) => {
        
       });
         
-      res.cookie ('sessionId', String(session._id),{
+      res.cookie('sessionId', session._id, {
         httpOnly: true,
         expires: new Date(session.refreshTokenValidUntil),
-    
       });
 
       res.status(200).json({
@@ -47,17 +46,31 @@ export const loginUserController = async (req, res, next) => {
 };
 
  export const refreshSessionController = async (req, res) => {
-
-      const newAccessToken = await refreshSession({
-        sessionId: req.cookies.sessionId,
-        refreshToken: req.cookies.refreshToken,
+    
+  const { sessionId, refreshToken } = req.cookies;
+  
+  const newSession = await refreshSession({
+        sessionId: sessionId,
+        refreshToken: refreshToken,
+      });
+      res.cookie ('refreshToken', newSession.refreshToken,{
+        httpOnly: true,
+        expires: new Date(newSession.refreshTokenValidUntil),
+       
+      });
+        
+      res.cookie('sessionId', newSession._id, {
+        httpOnly: true,
+        expires: new Date(newSession.refreshTokenValidUntil),
       });
     
+        
       res.status(200).json({
           status: 200,
           message: 'Session refreshed successfully!',
-          data: { accessToken: newAccessToken }
+          data: { accessToken: newSession.accessToken }
       });
+
 
 };
 

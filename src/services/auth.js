@@ -6,6 +6,7 @@ import { ACCESS_TOKEN_LIVE_TIME, REFRESH_TOKEN_LIVE_TIME, ONE_DAY } from "../../
 import crypto from "crypto";
 
 
+
 export const registerUser = async (payload) => {
         const { name, email, password } = payload;
 
@@ -22,48 +23,68 @@ export const registerUser = async (payload) => {
      return newUser;
 }
 export const loginUser = async (userData) => {
+
     const user = await User.findOne({ email: userData.email });
 
     if (!user) throw createHttpError(401, "Invalid credentials");
-
+  
+ 
     const isPasswordValid = await bcrypt.compare(userData.password, user.password);
     if (!isPasswordValid) {
       throw createHttpError(401, "Invalid email or password");
     } 
 
-    // Видаляємо старі сесії
-    await SessionCollection.deleteMany({ userId: user._id });
-
-    const session = createSession(); // Генеруємо сесію
-
-    await SessionCollection.create({
-        userId: user._id,
-        accessToken: session.accessToken,
-        accessTokenValidUntil: session.accessTokenValidUntil,
-        refreshToken: session.refreshToken,
-        refreshTokenValidUntil: session.refreshTokenValidUntil,
-    });
+    await SessionCollection.deleteOne({userId: user._id});
+    const session = await SessionCollection.create({
+        accessToken: crypto.randomBytes(20).toString('base64') ,
+        refreshToken: crypto.randomBytes(20).toString('base64'),
+        userId: user._id ,
+        accessTokenValidUntil: new Date(Date.now() + ACCESS_TOKEN_LIVE_TIME),
+        refreshTokenValidUntil: new Date(Date.now() +  REFRESH_TOKEN_LIVE_TIME),
+    })
 
     return session;
 };
 
-const createSession = () => {
-    const accessToken = crypto.randomBytes(30).toString('hex');
-    const refreshToken = crypto.randomBytes(30).toString('hex');
-    return {
-      accessToken,
-      refreshToken,
-      accessTokenValidUntil: new Date(Date.now() + ONE_DAY),
-      refreshTokenValidUntil: new Date(Date.now() + ONE_DAY),
-    };
+
+
+
+export const refreshSession = async ({ sessionId, refreshToken }) => {
+
+ const currentSession = await SessionCollection.findOne({ _id: sessionId, refreshToken });
+ const userId = currentSession.userId;
+ await SessionCollection.deleteOne({ _id: sessionId, refreshToken });
+ return  await SessionCollection.create({
+        accessToken: crypto.randomBytes(20).toString('base64') ,
+        refreshToken: crypto.randomBytes(20).toString('base64'),
+        userId: userId,
+        accessTokenValidUntil: new Date(Date.now() + ACCESS_TOKEN_LIVE_TIME),
+        refreshTokenValidUntil: new Date(Date.now() +  REFRESH_TOKEN_LIVE_TIME),
+    });
 };
 
-  
 
-export const refreshSession = async ({ refreshToken }) => {
-   return await crypto.randomBytes(30).toString('hex');
-};
+// export const refreshSession = async ({ sessionId, refreshToken }) => {
+//     const existingSession = await SessionCollection.findOne({ _id: sessionId, refreshToken });
 
+//     if (!existingSession) {
+//         throw new Error("Session not found or invalid refresh token");
+//     }
+
+//     const userId = existingSession.userId; // Отримуємо userId
+
+//     await SessionCollection.deleteOne({ _id: sessionId });
+//    const session = createSession(); // Генеруємо сесію
+//    await SessionCollection.create({
+//        userId: userId,
+//        accessToken: session.accessToken,
+//        accessTokenValidUntil: session.accessTokenValidUntil,
+//        refreshToken: session.refreshToken,
+//        refreshTokenValidUntil: session.refreshTokenValidUntil,
+//    });
+
+//    return session.accessToken;
+// };
 
 export const logoutUser = async ({ sessionId, refreshToken }) => {
     return await SessionCollection.deleteOne({ _id: sessionId, refreshToken });

@@ -5,7 +5,7 @@ import createError from 'http-errors';
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
-
+import { SessionCollection } from "../models/session.js";
 
 export const getContactsController = async (req, res, next) => {
   try {
@@ -29,7 +29,9 @@ export const getContactsController = async (req, res, next) => {
     const order = sortOrder === 'desc' ? -1 : 1;
 
     const filter = parseFilterParams(req.query);
-
+    const { sessionId, refreshToken } = req.cookies;
+    const currentSession = await SessionCollection.findOne({ _id: sessionId, refreshToken });
+    filter.userId = currentSession.userId;
     // Викликаємо функцію для отримання контактів
     const { contacts, totalItems, totalPages } = await getContacts({
       page,
@@ -85,7 +87,12 @@ export const getContactByIdController = async (req, res, next) => {
 export const createContactController = async (req, res, next) => {
   console.log(req.body)
 try {
-  const newContact = await createContact(req.body);
+   const { sessionId, refreshToken } = req.cookies;
+   const currentSession = await SessionCollection.findOne({ _id: sessionId, refreshToken });
+   const userId = currentSession.userId;
+  const dataToCreateContact = req.body;
+  dataToCreateContact.userId = userId; 
+  const newContact = await createContact(dataToCreateContact);
   res.status(201).json({
     status: 201,
     message: 'Successfully created a contact!',
