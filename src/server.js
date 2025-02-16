@@ -17,8 +17,8 @@ export function setupServer() {
     type:['application/json', 'application/vnd.api+json']
   })); 
 
-
   app.use(cors());
+
   app.use(cookieParser());
 
   app.use(

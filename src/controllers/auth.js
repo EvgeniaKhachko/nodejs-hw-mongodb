@@ -1,8 +1,10 @@
-import { SessionCollection } from "../models/session.js";
-import { registerUser ,loginUser, logoutUser ,refreshSession } from "../services/users.js";
-import createHttpError from "http-errors";
 
-export const registerUserController = async (req, res, next ) => {
+import { registerUser ,loginUser, logoutUser ,refreshSession } from "../services/auth.js";
+import createHttpError from "http-errors";
+import { ONE_DAY } from "../../time.js";
+
+
+export const registerUserController = async (req, res, next) => {
 
 try {
     const newUser = await registerUser(req.body);
@@ -16,20 +18,19 @@ try {
   }
 };
 
-
 export const loginUserController = async (req, res, next) => {
   try {
       const session = await loginUser(req.body);
 
-      res.cookie ('sessionToken', session.refreshToken,{
+      res.cookie ('refreshToken', session.refreshToken,{
         httpOnly: true,
-        expires: session.refreshTokenValidUntil,
+        expires: new Date(session.refreshTokenValidUntil),
+       
       });
         
-      res.cookie ('sessionId', session._id,{
+      res.cookie('sessionId', session._id, {
         httpOnly: true,
-        expires: session.refreshTokenValidUntil,
-    
+        expires: new Date(session.refreshTokenValidUntil),
       });
 
       res.status(200).json({
@@ -44,47 +45,49 @@ export const loginUserController = async (req, res, next) => {
   }
 };
 
-export const refreshSessionController = async (req, res) => {
-  try {
-      // Отримуємо sessionId та sessionToken з кук
-      const { sessionId, sessionToken } = req.cookies;
-      // Якщо куки не передано
-      if (!sessionId || !sessionToken) {
-          return res.status(400).json({ message: 'Missing session ID or token in cookies' });
-      } 
-      const { accessToken } = await refreshSession({ sessionId, sessionToken });
-      
-      // Відповідь після успішного оновлення сесії
-      res.status(200).json({
-          status: '200',
-          message: 'Successfully refreshed a session!',
-          data: {accessToken}
+ export const refreshSessionController = async (req, res) => {
+    
+  const { sessionId, refreshToken } = req.cookies;
+  
+  const newSession = await refreshSession({
+        sessionId: sessionId,
+        refreshToken: refreshToken,
       });
-  } catch (error) {
-    next(error);
-  }
-};
+      res.cookie ('refreshToken', newSession.refreshToken,{
+        httpOnly: true,
+        expires: new Date(newSession.refreshTokenValidUntil),
+       
+      });
+        
+      res.cookie('sessionId', newSession._id, {
+        httpOnly: true,
+        expires: new Date(newSession.refreshTokenValidUntil),
+      });
+    
+        
+      res.status(200).json({
+          status: 200,
+          message: 'Session refreshed successfully!',
+          data: { accessToken: newSession.accessToken }
+      });
 
+
+};
 
 export const logoutUserController = async (req, res, next) => {
   try {
-      // Отримуємо сесійні дані з кукі
-      const { sessionId, sessionToken } = req.cookies;
+    const sessionId = req.cookies?.sessionId;
 
-      if (!sessionId || !sessionToken) {
-          return res.status(400).json({ message: "Session not found" });
-      }
+    if (sessionId) {
+      await logoutUser(sessionId);
+    }
 
-      // Викликаємо функцію видалення сесії
-      await logoutUser({ sessionId, sessionToken });
+  res.clearCookie('sessionId');
+  res.clearCookie('refreshToken');
 
-      // Очищаємо кукі
-      res.clearCookie("sessionToken");
-      res.clearCookie("sessionId");
+  res.status(204).send();
+} catch (error) {
+  next(error); 
+}
 
-      // Відправляємо відповідь без тіла (204 No Content)
-      res.status(204).send();
-  } catch (error) {
-      next(error);
-  }
 };

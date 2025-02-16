@@ -11,13 +11,15 @@ export const authenticate = async(req, res, next) => {
         }
     const [bearer, token] = authHeader.split(' ');
 
-    if(bearer !== 'Bearer'){
+    if(bearer !== 'Bearer'){    
         throw new createHttpError (401, 'Authorization header should be of Bearer type');
     }
      if (!token) {
             return next(createHttpError(401, 'No access token provided'));
-        }       
+        } 
+        console.log("TOKEN RECEIVED:", token);      
     const session = await SessionCollection.findOne({accessToken: token});
+    console.log("SESSION FOUND:", session); 
     if(!session) {
         return next(createHttpError(401, 'No active session found'));
     }
