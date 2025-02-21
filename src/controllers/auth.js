@@ -1,8 +1,7 @@
 
-import { registerUser ,loginUser, logoutUser ,refreshSession } from "../services/auth.js";
-import createHttpError from "http-errors";
-import { ONE_DAY } from "../../time.js";
-
+import { registerUser ,loginUser,
+   logoutUser ,refreshSession ,
+   sendResetEmail, resetPassword } from "../services/auth.js";
 
 export const registerUserController = async (req, res, next) => {
 
@@ -91,3 +90,23 @@ export const logoutUserController = async (req, res, next) => {
 }
 
 };
+ export const sendResetEmailController = async (req, res) => {
+  const{email} = req.body;
+  await sendResetEmail(email);
+  res.json({
+    status: 200,
+    message: "Reset password email has been successfully sent.",
+    data: {}
+  });
+ };
+
+ export const resetPasswordController = async (req, res) => {
+ 
+  await resetPassword(req.body);
+
+  res.json({
+    status: 200,
+    message: "Password has been successfully reset.",
+    data: {}
+  });
+ };

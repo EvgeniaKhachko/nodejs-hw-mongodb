@@ -8,6 +8,7 @@ const contactSchema = new mongoose.Schema({
     maxlength: 20, 
     trim: true
    },
+   
   phoneNumber: { 
     type: String, 
     required: true,
@@ -18,6 +19,9 @@ const contactSchema = new mongoose.Schema({
      type: String,
      trim: true, 
     //  match: [/^[\w.-]+@[\w.-]+\.\w{2,}$/, 'Invalid email format'] 
+     },
+     photo:{
+      type: String,
      },
   isFavourite: { 
     type: Boolean, 

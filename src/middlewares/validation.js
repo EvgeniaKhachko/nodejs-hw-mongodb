@@ -37,6 +37,7 @@ export const updateContactSchema = Joi.object({
   name: Joi.string().min(3).max(20),
   email: Joi.string().email(),
   phoneNumber: Joi.string().min(3).max(20).pattern(/^[\d+()\- ]+$/).message('Phone number must be a valid phone format'),
+  photo: Joi.string().allow(''),
   isFavourite: Joi.boolean(),
   contactType: Joi.string().valid("work", "home", "personal").optional(),
 }).or("name", "email", "phoneNumber", "isFavourite", "contactType");
@@ -52,4 +53,14 @@ export const registerUserValidationSchema = Joi.object({
 export const loginUserValidationSchema = Joi.object({
   email: Joi.string().required().min(2).max(50).email(),
   password: Joi.string().min(4).required()
+});
+
+export const sendResetEmailValidationSchema = Joi.object({
+  email: Joi.string().required().min(2).max(50).email(),
+  password: Joi.string().min(4).required()
+});
+
+export const resetPasswordValidationSchema = Joi.object({
+  password: Joi.string().min(4).required(),
+  token: Joi.string().required()
 });

@@ -6,6 +6,7 @@ import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
 import { SessionCollection } from "../models/session.js";
+import { saveFileToUploadDir} from "../utils/saveFileToUploadDir.js";
 
 export const getContactsController = async (req, res, next) => {
   try {
@@ -106,14 +107,24 @@ try {
 export const patchContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params; // ID контакту з параметрів маршруту
-    const updateData = req.body; // Дані для оновлення  запиту
 
-    const updatedContact = await updateContact(contactId, updateData);
+    const photo = req.file;
+    let photoUrl;
 
+    if (photo) {
+      photoUrl = await saveFileToUploadDir(photo);
+    }
+    const updateData = { ...req.body };
+    if (photoUrl) {
+      updateData.photo = photoUrl; // Оновлюємо поле фото
+    }
+    if (updateData.isFavourite !== undefined) {
+      updateData.isFavourite = updateData.isFavourite === 'true' || updateData.isFavourite === true;
+    }
+    const updatedContact = await updateContact(contactId, updateData, { new: true });
     if (!updatedContact) {
       throw createError(404, 'Contact not found');
     }
-
     res.json({
       status: 200,
       message: 'Successfully patched a contact!',
@@ -123,6 +134,7 @@ export const patchContactController = async (req, res, next) => {
     next(error); 
   }
 };
+
 export const deleteContactController = async (req, res, next) => {
   try {
     const { contactId } = req.params;
