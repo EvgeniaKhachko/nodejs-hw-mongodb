@@ -6,8 +6,9 @@ import authRouter from './routes/auth.js';
 import contactsRouter from './routes/contacts.js'; // Імпортуємо роутер
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import { UPLOAD_DIR } from './constants/path.js';
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 3000;  
 
 export function setupServer() {
   const app = express();// Ініціалізуємо додаток Express
@@ -42,8 +43,15 @@ app.get('/', (req, res) => {
 
 app.use('/auth', authRouter);
 
+app.get('/reset-password', (req, res) => {
+  res.json({ message: 'Token is valid' });
+});
+
 // Роут для /contacts
   app.use('/contacts', contactsRouter);
+
+  app.use('/uploads', express.static(UPLOAD_DIR));
+
 
   // Middleware для обробки 404
   app.use(notFoundHandler);
@@ -53,6 +61,8 @@ app.use(errorHandler);
 
  app.listen(PORT, () => {
    console.log(`Server is running on ${PORT}`);
- }); 
+ });
+
 };
+
 
