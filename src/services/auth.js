@@ -148,12 +148,12 @@ try {
     }
 
 const user = await User.findById(payload.sub);
-    if(!user) {
+if(!user) {
     throw createHttpError(404, "User not found!");
 }
 const hashedPassword = await bcrypt.hash(password, 12);
 
-user.password= hashedPassword;
+user.password = hashedPassword;
 user.refreshToken = null;
 
 await user.save();

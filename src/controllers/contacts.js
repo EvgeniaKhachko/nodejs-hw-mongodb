@@ -6,7 +6,9 @@ import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
 import { SessionCollection } from "../models/session.js";
-import { saveFileToUploadDir} from "../utils/saveFileToUploadDir.js";
+import { saveFileToCloudinary} from "../utils/saveFileToCloudinary.js";
+import {saveFileToUploadDir} from "../utils/saveFileToUploadDir.js";
+import { getEnvVar } from '../utils/getEnvVar.js';
 
 export const getContactsController = async (req, res, next) => {
   try {
@@ -92,7 +94,14 @@ try {
    const currentSession = await SessionCollection.findOne({ _id: sessionId, refreshToken });
    const userId = currentSession.userId;
   const dataToCreateContact = req.body;
-  dataToCreateContact.userId = userId; 
+  const photo = req.file;
+  let photoUrl;
+
+  if (photo) {
+    photoUrl = await saveFileToCloudinary(photo);
+  }
+  dataToCreateContact.userId = userId;
+  dataToCreateContact.photo = photoUrl; 
   const newContact = await createContact(dataToCreateContact);
   res.status(201).json({
     status: 201,
@@ -112,27 +121,24 @@ export const patchContactController = async (req, res, next) => {
     let photoUrl;
 
     if (photo) {
-      photoUrl = await saveFileToUploadDir(photo);
+      photoUrl = await saveFileToCloudinary(photo);
     }
-    const updateData = { ...req.body };
-    if (photoUrl) {
-      updateData.photo = photoUrl; // Оновлюємо поле фото
-    }
-    if (updateData.isFavourite !== undefined) {
-      updateData.isFavourite = updateData.isFavourite === 'true' || updateData.isFavourite === true;
-    }
-    const updatedContact = await updateContact(contactId, updateData, { new: true });
-    if (!updatedContact) {
+    const result = await updateContact(contactId, {
+      ...req.body,
+      photo: photoUrl,
+    });
+  
+    if (!result) {
       throw createError(404, 'Contact not found');
     }
     res.json({
       status: 200,
       message: 'Successfully patched a contact!',
-      data: updatedContact,
+      data: result,
     });
   } catch (error) {
     next(error); 
-  }
+  } 
 };
 
 export const deleteContactController = async (req, res, next) => {

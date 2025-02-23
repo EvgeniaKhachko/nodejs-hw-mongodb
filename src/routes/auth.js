@@ -43,7 +43,7 @@ authRouter.post('/send-reset-email',
     validateBody(sendResetEmailValidationSchema),     
     ctrlWrapper(sendResetEmailController));
 
-authRouter.post('/reset-password',
+authRouter.post('/reset-pwd',
         validateBody(resetPasswordValidationSchema),
         ctrlWrapper(resetPasswordController));
     

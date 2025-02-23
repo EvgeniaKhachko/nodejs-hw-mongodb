@@ -7,6 +7,8 @@ import contactsRouter from './routes/contacts.js'; // Імпортуємо ро�
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { UPLOAD_DIR } from './constants/path.js';
+import { upload } from './middlewares/multer.js';
+import path from 'path';
 
 const PORT = Number(process.env.PORT) || 3000;  
 
@@ -49,7 +51,7 @@ app.get('/reset-password', (req, res) => {
 
 // Роут для /contacts
   app.use('/contacts', contactsRouter);
-
+ 
   app.use('/uploads', express.static(UPLOAD_DIR));
 
 
