@@ -56,8 +56,7 @@ export const loginUserValidationSchema = Joi.object({
 });
 
 export const sendResetEmailValidationSchema = Joi.object({
-  email: Joi.string().required().min(2).max(50).email(),
-  password: Joi.string().min(4).required()
+  email: Joi.string().required().min(2).max(50).email()
 });
 
 export const resetPasswordValidationSchema = Joi.object({
