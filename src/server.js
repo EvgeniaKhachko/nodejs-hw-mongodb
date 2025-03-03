@@ -9,6 +9,12 @@ import { notFoundHandler } from './middlewares/notFoundHandler.js';
 import { UPLOAD_DIR } from './constants/path.js';
 import { upload } from './middlewares/multer.js';
 import path from 'path';
+import { swaggerDocs } from './middlewares/swaggerDocs.js';
+import YAML from 'yamljs';
+
+
+
+const swaggerDocument = YAML.load(path.join('docs', 'openapi.yaml'));
 
 const PORT = Number(process.env.PORT) || 3000;  
 
@@ -19,6 +25,7 @@ export function setupServer() {
   app.use(json({
     type:['application/json', 'application/vnd.api+json']
   })); 
+
 
   app.use(cors());
 
@@ -53,8 +60,9 @@ app.get('/reset-password', (req, res) => {
   app.use('/contacts', contactsRouter);
  
   app.use('/uploads', express.static(UPLOAD_DIR));
-
-
+  app.use('/api-docs', swaggerDocs());
+  // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+ 
   // Middleware для обробки 404
   app.use(notFoundHandler);
 
